@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Мобильный кружок для ПК</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    /* тот же стиль, что у тебя (можешь не менять) */
+    body { background: #13101A; color: #daeaff; font-family: 'Segoe UI', 'Inter', Arial, sans-serif; margin: 0; padding: 0; min-width: 300px; text-align: center; }
+    h2 { color: #b3bdfc; font-weight: bold; margin: 28px 0 18px 0; letter-spacing: 1px;}
+    #circleBox { width: 210px; height: 210px; margin: 0 auto 18px auto; position: relative; }
+    #preview { width: 210px; height: 210px; border-radius: 50%; object-fit: cover; background: #232129; display: block; box-shadow: 0 6px 24px #3e1f5619; margin: 0 auto 0 auto; }
+    button { background: linear-gradient(90deg, #fd8cea 0%, #5b62ff 90%); color: #fff; font-size: 1.09em; font-family: inherit; border: none; border-radius: 12px; box-shadow: 0 1.5px 10px #fd8cea33; margin: 12px 6px 0 6px; padding: 10px 28px; cursor: pointer; transition: filter .14s, transform .09s; outline: none;}
+    button:disabled { background: #282440 !important; color: #aaa4c0 !important; opacity: .73; cursor: default; box-shadow: none;}
+    button:hover:not(:disabled) { filter: brightness(1.1); transform: scale(1.03) translateY(-2px);}
+    #progress { color: #93f6fa; margin: 16px 0 0 0; min-height: 20px; font-size: 1.02em;}
+    .tip { font-size: 0.99em; color: #a2aeff; margin: 23px 16px 0 16px; background: #211c32; border-radius: 10px; padding: 9px 0 9px 0; letter-spacing: 0.08em; box-shadow: 0 2px 14px #372e666b;}
+    select { margin-top: 10px; background: #191120; color: #c0d8ff; border-radius: 7px; border: 1.2px solid #403f55; padding: 7px 13px; font-size: 1.05em; }
+  </style>
+</head>
+<body>
+  <h2>Мобильный кружок для ПК</h2>
+  <div id="circleBox">
+    <video id="preview" autoplay muted playsinline></video>
+  </div>
+  <select id="cameraSelect"></select>
+  <button id="start">Записать</button>
+  <button id="stop" disabled>Остановить</button>
+  <button id="upload" disabled>Загрузить</button>
+  <div id="progress"></div>
+  <div class="tip">После загрузки кружка запись сразу отправится на ваш ПК автоматически!</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const toId = params.get('to') || '';
+
+let stream, recorder, chunks=[], blob;
+const preview = document.getElementById('preview');
+const startBtn = document.getElementById('start');
+const stopBtn = document.getElementById('stop');
+const uploadBtn = document.getElementById('upload');
+const progress = document.getElementById('progress');
+const cameraSelect = document.getElementById('cameraSelect');
+
+let devices = [];
+
+async function enumerateCams(selectedDeviceId) {
+  devices = [];
+  cameraSelect.innerHTML = "";
+  let list = [];
+  try {
+    // Важно: следующее принудительно просит разрешение на доступ к медиа разово (иначе enumerateDevices - пуст)
+    await navigator.mediaDevices.getUserMedia({ video: true });
+    list = await navigator.mediaDevices.enumerateDevices();
+  } catch(e) {
+    progress.textContent = 'Нет доступа к видеокамере!';
+    startBtn.disabled = true;
+    return;
+  }
+  devices = list.filter(d => d.kind === 'videoinput');
+  if (devices.length === 0) {
+    cameraSelect.innerHTML = "<option>Нет видеокамер</option>";
+    startBtn.disabled = true;
+    return;
+  }
+  devices.forEach((dev, idx) => {
+    const opt = document.createElement('option');
+    let label = dev.label || (idx === 0 ? "Стандартная камера" : "Камера #" + (idx+1));
+    if (/front/i.test(dev.label)) label += " (фронтальная)";
+    if (/back|зад/i.test(dev.label)) label += " (тыльная)";
+    opt.value = dev.deviceId; opt.textContent = label;
+    if (selectedDeviceId && dev.deviceId === selectedDeviceId) opt.selected = true;
+    cameraSelect.appendChild(opt);
+  });
+}
+
+// Получить stream с нужной камеры
+async function getCamStream(deviceId) {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+  const constraints = {
+    video: {
+      deviceId: deviceId ? { exact: deviceId } : undefined,
+      width: { ideal: 480 }, height: { ideal: 480 }
+    },
+    audio: true
+  };
+  stream = await navigator.mediaDevices.getUserMedia(constraints);
+  preview.srcObject = stream;
+  return stream;
+}
+
+// При смене камеры: показать видео с неё!
+cameraSelect.onchange = async () => {
+  await getCamStream(cameraSelect.value);
+  chunks = [];
+  progress.textContent = "Выбрана камера!";
+};
+
+startBtn.onclick = async () => {
+  await enumerateCams(cameraSelect.value);
+  await getCamStream(cameraSelect.value);
+  chunks=[];
+  recorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+  recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.onstop = () => {
+    stream.getTracks().forEach(t => t.stop());
+    blob = new Blob(chunks, { type: 'video/webm' });
+    uploadBtn.disabled = false;
+    progress.textContent = "Готово! Теперь загрузи кружок.";
+    preview.src = URL.createObjectURL(blob);
+    preview.srcObject = null;
+  };
+  recorder.start();
+  startBtn.disabled = true;
+  stopBtn.disabled = false;
+  progress.textContent = "Запись...";
+};
+stopBtn.onclick = () => {
+  recorder.stop();
+  startBtn.disabled = false;
+  stopBtn.disabled = true;
+  progress.textContent = "Обработка...";
+};
+uploadBtn.onclick = async () => {
+  if (!blob) return;
+  progress.textContent = "Загрузка...";
+  const formData = new FormData();
+  formData.append('file', blob, 'circle.webm');
+  const resp = await fetch("https://pepelonmyown.ru/upload1.php", { method: "POST", body: formData });
+  const data = await resp.json();
+  if (data.link) {
+    progress.textContent = "Кружок отправлен на ПК!";
+    // ----- Автоматически пушим ссылку на ПК -----
+    if (toId) {
+      await fetch('https://pepelonmyown.ru/push_link.php', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: toId, link: data.link })
+      });
+    }
+  } else {
+    progress.textContent = "Ошибка загрузки.";
+  }
+  uploadBtn.disabled = true;
+};
+
+// При загрузке проинициализировать список камер и показать превью
+window.addEventListener('DOMContentLoaded', async () => {
+  await enumerateCams();
+  if(devices.length)
+    await getCamStream(devices[0].deviceId);
+});
+</script>
+</body>
+</html>
+
+

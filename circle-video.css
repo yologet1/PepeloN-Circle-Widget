@@ -1,0 +1,8 @@
+video.pepelon-circle-video {
+  border-radius: 50% !important;
+  width: 180px !important;
+  height: 180px !important;
+  object-fit: cover !important;
+  background: #111 !important;
+  display: block !important;
+}

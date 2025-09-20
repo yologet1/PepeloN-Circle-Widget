@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Кружок для чата</title>
+  <style>
+    html, body {
+      width: 340px;      /* или реальная ширина твоего popup-окна */
+      min-width: 340px;
+      max-width: 340px;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      overflow-y: auto;  /* если нужен вертикальный скролл */
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', 'Inter', Arial, sans-serif;
+      background: #13101A;
+      color: #daeaff;
+      text-align: center;
+    }
+    h2 {
+      color: #b3bdfc;
+      font-weight: bold;
+      margin: 24px 0 12px 0;
+      letter-spacing: 1px;
+    }
+    /* Плавная анимация только по opacity, без влияния на layout! */
+    #mainActions, #qrWrap {
+      max-height: 800px;
+      transition: max-height 0.36s cubic-bezier(.4,0,.2,1), opacity 0.24s;
+      opacity: 1;
+      overflow: hidden;
+    }
+    #mainActions.hide, #qrWrap.hide {
+      max-height: 0 !important;
+      opacity: 0 !important;
+      pointer-events: none;
+    }
+    #mainActions {
+      transition: opacity .23s;
+      opacity: 1;
+      pointer-events: auto;
+      display: block;
+    }
+    #mainActions.hide {
+      opacity: 0;
+      pointer-events: none;
+      display: none;
+    }
+    #circleBox {
+      width: 220px;
+      height: 220px;
+      margin: 0 auto 10px auto;
+      position: relative;
+    }
+    #standbyGif {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      object-fit: cover;
+      position: absolute;
+      top: 0; left: 0;
+      z-index: 2;
+      display: block;
+    }
+    #preview {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #232129;
+      display: none;
+      box-shadow: 0 6px 28px #3e1f5619;
+      position: absolute;
+      top: 0; left: 0;
+      z-index: 3;
+    }
+    /* QRWrap теперь — В ТОЧНОМ центре, в потоке, занимает ровно как кружок */
+    #qrWrap {
+      width: 220px;
+      min-height: 220px;
+      margin: 0 auto 10px auto;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 10;
+      background: none;
+      box-shadow: none;
+      padding: 0;
+      transition: opacity .23s;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #qrWrap:not(.hide) {
+      display: flex;
+    }
+    #qrWrap.hide {
+      display: none;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #qr {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 17px;
+    }
+    button, #qrBtn {
+      background: linear-gradient(90deg, #fd8cea 0%, #5b62ff 90%);
+      color: #fff;
+      font-size: 1.09em;
+      font-family: inherit;
+      border: none;
+      border-radius: 11px;
+      box-shadow: 0 1.5px 10px #fd8cea33;
+      margin: 8px 2px;
+      padding: 8px 22px;
+      cursor: pointer;
+      transition: filter .14s, transform .09s;
+    }
+    button:disabled {
+      background: #282440;
+      color: #aaa4c0;
+      opacity: .73;
+      cursor: default;
+      box-shadow: none;
+    }
+    button:hover:not(:disabled), #qrBtn:hover:not(:disabled) {
+      filter: brightness(1.1);
+      transform: scale(1.03) translateY(-2px);
+    }
+    #link {
+      background: #23213d;
+      color: #d6e2ff;
+      border: 1px solid #283250;
+      font-size: 1em;
+      border-radius: 7px;
+      padding: 7px 4px;
+      margin: 17px auto 7px auto;
+      width: 92%;
+      word-break: break-all;
+      text-align: center;
+      cursor: pointer;
+      transition: box-shadow .11s;
+    }
+    #link:active, #link:focus {
+      box-shadow: 0 0 0 3px #bcaeff47;
+      outline: none;
+    }
+    #progress {
+      color: #93f6fa;
+      margin: 8px 0 4px 0;
+      min-height: 17px;
+    }
+    .back-btn {
+      background: #23213d;
+      color: #b3bdfc;
+      border: 1px solid #463375;
+      margin-top: 14px;
+      font-size: 0.98em;
+      padding: 8px 26px;
+      border-radius: 7px;
+      box-shadow: none;
+      transition: background .14s;
+    }
+    .back-btn:hover {
+      background: #39325f;
+      color: #faf8ff;
+    }
+    hr {
+      border: none;
+      border-top: 1.5px solid #22203a;
+      margin: 18px 0;
+    }
+  </style>
+</head>
+<body>
+  <h2>Кружок для чата</h2>
+  <div id="mainActions">
+    <div id="circleBox">
+      <img id="standbyGif" src="standby.gif" alt="Ожидание">
+      <video id="preview" autoplay muted playsinline></video>
+    </div>
+    <button id="start">Записать</button>
+    <button id="stop" disabled>Остановить</button>
+    <button id="upload" disabled>Загрузить</button>
+    <div id="progress"></div>
+    <input id="link" readonly style="text-align:center;">
+    <hr style="margin:16px 0 0 0;">
+    <button id="qrBtn">QR-код для телефона</button>
+  </div>
+  <!-- QRWrap теперь там же, где был кружок -->
+  <div id="qrWrap" class="hide">
+    <div id="qr"></div>
+    <button id="backBtn" class="back-btn">Назад</button>
+  </div>
+  <script src="qrious.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
+
+
+

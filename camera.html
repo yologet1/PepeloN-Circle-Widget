@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Кружок для чата</title>
+  <style>
+    #preview { border-radius: 50%; width: 220px; height: 220px; object-fit: cover; background: #222; }
+    #link { margin-top: 10px; word-break: break-all; }
+    button { margin: 10px; }
+    body { text-align: center; min-width:260px; }
+    #progress { color: #229977; }
+    ol { text-align: left; max-width: 360px; margin: 20px auto; }
+  </style>
+</head>
+<body>
+  <h2>Кружок для чата</h2>
+  <video id="preview" autoplay muted playsinline></video><br>
+  <button id="start">Записать</button>
+  <button id="stop" disabled>Остановить</button>
+  <button id="download" disabled>Скачать кружок</button>
+  <button id="openUpload">Открыть pepelonmyown.ru</button>
+  <div id="progress"></div>
+  <input id="link" readonly style="width:90%;text-align:center;">
+  <button id="copy" style="display:none;">Скопировать ссылку</button>
+  <div>
+    <b>Как загрузить кружок на сайт:</b>
+    <ol>
+      <li>Нажмите "Скачать кружок".</li>
+      <li>Откройте pepelonmyown.ru (кнопкой снизу).</li>
+      <li>Перетащите скачанный файл в поле загрузки на сайте или выберите через "Click here...".</li>
+      <li>Скопируйте появившуюся короткую ссылку (например, pepelonmyown.ru/XXXX).</li>
+      <li>Вставьте ссылку в чат Twitch — всё!</li>
+    </ol>
+  </div>
+  <script src="camera.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Pepelon Circle Extension — видео-кружки для Twitch и ПК</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Быстро отправляй видео-кружки в Twitch и на ПК. Расширение с кнопкой в чате, QR-кодом и моментальной загрузкой с телефона!">
+  <style>
+    body {
+      background: #181329;
+      color: #eef2ff;
+      font-family: 'Segoe UI', 'Inter', Arial, sans-serif;
+      margin: 0; padding: 0;
+      min-height: 100vh;
+    }
+    header {
+      padding: 44px 0 12px 0;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2em;
+      font-weight: bold;
+      color: #e6e0ff;
+      margin-top: 7px;
+      letter-spacing: .05em;
+      text-shadow: 0 2px 10px #7b47a6a7;
+    }
+    .desc {
+      margin: 0 auto 32px auto;
+      max-width: 500px;
+      color: #c2d2ff;
+      font-size: 1.1em;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .install-btn {
+      background: linear-gradient(90deg,#fd8cea 0%,#5b62ff 90%);
+      color: #fff;
+      font-size: 1.23em;
+      font-family: inherit;
+      border: none;
+      border-radius: 24px;
+      box-shadow: 0 4px 26px #9067ff22;
+      padding: 17px 40px;
+      margin: 20px auto 35px auto;
+      cursor: pointer;
+      display: block;
+      outline: none;
+      font-weight: bold;
+      letter-spacing: .04em;
+      transition:filter .15s,box-shadow .16s,transform .1s;
+    }
+    .install-btn:hover {
+      filter:brightness(1.1);
+      transform:scale(1.04) translateY(-2px);
+      box-shadow:0 8px 38px #9d53f9a8;
+    }
+    .steps {
+      max-width: 870px;
+      margin: 50px auto 30px auto;
+      padding: 12px 0 12px 0;
+    }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 38px;
+      background: #221845ee;
+      border-radius: 15px;
+      margin-bottom: 35px;
+      padding: 28px 38px 30px 20px;
+      box-shadow: 0 2px 24px #6b44d224;
+      position: relative;
+    }
+    .step-num {
+      min-width: 48px; min-height: 48px;
+      font-size: 1.45em;
+      background: linear-gradient(135deg,#feace2 10%,#736cff 85%);
+      color: #fff;
+      font-weight: bold;
+      border-radius:15px;
+      display: flex; align-items: center; justify-content: center;
+      margin-right: 8px;
+      box-shadow: 0 2px 10px #453cdd44;
+    }
+    .step-img {
+      width: 350px;
+      height: 228px;
+      min-width: 250px;
+      min-height: 152px;
+      border-radius: 16px;
+      background: #130e21cc;
+      object-fit: cover;
+      box-shadow: 0 4px 18px #8e7ddb45;
+      border: 2.5px solid #343062;
+      margin-right: 16px;
+      flex-shrink: 0;
+      transition: box-shadow 0.15s;
+      cursor: zoom-in;
+    }
+    .step-img:hover {
+      box-shadow: 0 6px 32px #a083fdc7,0 1.5px 18px #222;
+    }
+    .step-content { flex: 1; }
+    .step-title {
+      font-weight: bold;
+      font-size: 1.15em;
+      color: #e2b4ff;
+      margin-bottom: 11px;
+      letter-spacing: .04em;
+    }
+    .step-desc {
+      font-size: 1.12em;
+      color: #e4e9fe;
+      line-height: 1.54;
+      margin-bottom:2px;
+    }
+    /* Modal for screenshots */
+    #screenshotModal {
+      display: none; position: fixed; left:0; top: 0; right:0; bottom:0; z-index:10000;
+      background: rgba(24,17,50,0.96);
+      align-items: center; justify-content: center;
+      transition: background 0.2s;
+      cursor: zoom-out;
+    }
+    #screenshotModal img {
+      max-width: 97vw; max-height: 94vh; border-radius:16px; box-shadow:0 6px 40px #7f71f6b6;
+      background: #221432;
+      border: 3px solid #7a72b6;
+      cursor: zoom-out;
+      display: block;
+    }
+    #screenshotModal:active img { filter:brightness(0.995); }
+    #screenshotModal:after {
+      content: 'Нажмите вне картинки или Esc, чтобы закрыть';
+      display:block;
+      color:#bbbada;
+      text-align:center;
+      margin-top:16px;
+      font-size:0.99em;
+      letter-spacing:.03em;
+    }
+    footer {
+      margin: 60px 0 18px 0;
+      color: #635aac;
+      font-size: 0.98em;
+      text-align: center;
+      letter-spacing: .025em;
+    }
+    @media (max-width: 900px) {
+      .step-img {width: 95vw;max-width: 420px;height: auto;}
+      .steps{padding:2px;}
+      .step {flex-direction: column;align-items: stretch;padding:16px 2vw 13px 2vw;}
+      .step-num {margin:0 0 14px 0;}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Pepelon Circle Extension</h1>
+    <div class="desc">
+      Просто и быстро отправляй <b>видео-кружки</b> в чаты Twitch прямо со своего ПК <br>или смартфона. Запись — в один клик, QR-код — для моментального обмена!
+    </div>
+    <a class="install-btn" href="https://github.com/yologet1/pepel_circle.git" target="_blank">➤ Скачать расширение</a>
+  </header>
+
+  <section class="steps">
+    <!-- 1 -->
+    <div class="step">
+      <div class="step-num">1</div>
+      <img class="step-img" src="3HUZ3d.png" alt="Скриншот скачивания" onclick="openModal(this.src)">
+      <div class="step-content">
+        <div class="step-title">Скачайте расширение</div>
+        <div class="step-desc">
+          Нажмите "<b>Скачать расширение</b>" и получите .crx-файл.<br>
+          <small>Подходит для Chrome, Яндекс.Браузера и др. Chromium-браузеров.</small>
+        </div>
+      </div>
+    </div>
+    <!-- 2 -->
+    <div class="step">
+      <div class="step-num">2</div>
+      <img class="step-img" src="gVv68l.png" alt="Скриншот установки" onclick="openModal(this.src)">
+      <div class="step-content">
+        <div class="step-title">Установите и включите расширение</div>
+        <div class="step-desc">
+          Перетащите .crx в <b>chrome://extensions</b> или откройте через меню расширений.<br>
+          <small>В Chrome Web Store установка — в 1 клик.</small>
+        </div>
+      </div>
+    </div>
+    <!-- 3 -->
+    <div class="step">
+      <div class="step-num">3</div>
+      <img class="step-img" src="wabPL1.png" alt="Скриншот использования" onclick="openModal(this.src)">
+      <div class="step-content">
+        <div class="step-title">Пользуйтесь!</div>
+        <div class="step-desc">
+          В чатах Twitch появится кнопка "Кружок".<br>
+          — Записывайте или загружайте своё видео<br>
+          — Используйте QR-код для телефона<br>
+          — Получайте прямую ссылку и превью для мгновенного использования.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Модальное окно для просмотра скриншота -->
+  <div id="screenshotModal" style="display:none;position:fixed;left:0;top:0;right:0;bottom:0;z-index:10000;background:rgba(24,17,50,0.96);align-items:center;justify-content:center;">
+    <img id="screenshotModalImg" src="" alt="Скриншот">
+  </div>
+  <script>
+    function openModal(src) {
+      var modal = document.getElementById('screenshotModal');
+      var img = document.getElementById('screenshotModalImg');
+      img.src = src;
+      modal.style.display = 'flex';
+      // Закрыть по клику вне картинки
+      modal.onclick = function(e) {
+        if(e.target===modal) modal.style.display='none';
+      };
+      // Закрыть по Esc
+      document.onkeyup = function(e) {
+        if(e.key==='Escape') modal.style.display='none';
+      }
+    }
+  </script>
+
+  <footer>
+    © 2025 pepelonmyown.ru — by moonshine<br>
+    Ваши кружки доступны только по вашей ссылке.<br>
+    <a href="https://pepelonmyown.ru" style="color:#a2afff;">Сайт проекта</a>
+  </footer>
+</body>
+</html>
+
+
+

@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "Pepelon Кружок Uploader",
+  "version": "2.2",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://www.twitch.tv/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "icon-48.png",
+      "128": "icon-128.png"
+    }
+  },
+  "icons": {
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.twitch.tv/*"],
+      "js": ["qrious.min.js",
+            "content.js"
+      ],
+      "css": ["circle-video.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["standby.gif", "qrious.min.js"],
+      "matches": [ "<all_urls>" ]
+    }
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+
+
